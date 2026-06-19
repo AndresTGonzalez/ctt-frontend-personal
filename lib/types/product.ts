@@ -1,27 +1,41 @@
 /**
- * Tipos TypeScript para el módulo de productos.
+ * =============================================================================
+ * ARCHIVO: lib/types/product.ts — Tipos TypeScript del dominio Producto
+ * =============================================================================
  *
- * Estos tipos reflejan exactamente la forma del JSON que devuelve el API FastAPI.
- * Usarlos en toda la app garantiza autocompletado y detección de errores en compile-time.
+ * Estos tipos reflejan EXACTAMENTE la forma del JSON que devuelve FastAPI.
+ * Beneficios para estudiantes:
+ * - Autocompletado en el editor
+ * - Errores detectados en compile-time (antes de ejecutar)
+ * - Documentación viva del contrato del API
+ * =============================================================================
  */
 
-/** Un producto individual tal como lo devuelve GET /products/{id} */
+/* --- SECCIÓN 1: Entidad Product --- */
+/**
+ * Un producto individual.
+ * Corresponde a la respuesta de GET /products/{id} y cada item del listado.
+ */
 export type Product = {
-  /** Identificador único generado por el backend */
+  /** Identificador único generado por el backend (no se envía al crear) */
   id: number;
   /** Nombre comercial del producto */
   name: string;
-  /** Descripción detallada */
+  /** Descripción detallada del producto */
   description: string;
-  /** Precio unitario (número decimal) */
+  /** Precio unitario en formato numérico (ej: 19.99) */
   price: number;
   /** Unidades disponibles en inventario */
   stock: number;
-  /** Si el producto está visible/activo en el catálogo */
+  /** true = visible en catálogo, false = inactivo */
   is_active: boolean;
 };
 
-/** Respuesta paginada de GET /products/?page=&page_size= */
+/* --- SECCIÓN 2: Respuesta paginada --- */
+/**
+ * Estructura de GET /products/?page=&page_size=
+ * Incluye los items de la página actual + metadatos de paginación.
+ */
 export type PaginatedProducts = {
   items: Product[];
   total: number;
@@ -30,5 +44,9 @@ export type PaginatedProducts = {
   total_pages: number;
 };
 
-/** Datos necesarios para crear o actualizar un producto (sin id) */
+/* --- SECCIÓN 3: Input para crear/actualizar --- */
+/**
+ * Datos que se envían en POST y PUT (sin id).
+ * Omit<Product, "id"> = todos los campos de Product excepto id.
+ */
 export type ProductInput = Omit<Product, "id">;

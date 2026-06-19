@@ -1,14 +1,22 @@
 "use client";
 
 /**
- * Formulario reutilizable de producto.
+ * =============================================================================
+ * ARCHIVO: components/products/product-form.tsx — Formulario reutilizable
+ * =============================================================================
  *
- * Client Component porque usa react-hook-form (estado local + validación en cliente).
- * Se reutiliza en la página de creación y en el diálogo de edición.
+ * Tipo: Client Component — usa react-hook-form para estado y validación
  *
- * Composición shadcn: FieldGroup + Field + FieldLabel + FieldError
- * Validación: Zod via zodResolver
+ * Se reutiliza en:
+ * - /products/new (creación)
+ * - EditProductDialog (edición)
+ *
+ * Validación: Zod (productSchema) via zodResolver
+ * UI: FieldGroup + Field de shadcn/ui
+ * =============================================================================
  */
+
+/* --- SECCIÓN 1: Importaciones --- */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 
@@ -30,13 +38,19 @@ import {
   type ProductFormValues,
 } from "@/lib/validations/product";
 
+/* --- SECCIÓN 2: Tipos de props --- */
 type ProductFormProps = {
+  /** Valores iniciales (vacíos en creación, precargados en edición) */
   defaultValues?: Partial<ProductFormValues>;
+  /** Callback async que ejecuta la Server Action (create o update) */
   onSubmit: (data: ProductInput) => Promise<void>;
+  /** true mientras la Server Action está en curso */
   isPending?: boolean;
+  /** Texto del botón de envío */
   submitLabel?: string;
 };
 
+/* --- SECCIÓN 3: Valores por defecto del formulario --- */
 const emptyDefaults: ProductFormValues = {
   name: "",
   description: "",
@@ -45,17 +59,24 @@ const emptyDefaults: ProductFormValues = {
   is_active: true,
 };
 
+/* --- SECCIÓN 4: Componente formulario --- */
 export function ProductForm({
   defaultValues,
   onSubmit,
   isPending = false,
   submitLabel = "Guardar",
 }: ProductFormProps) {
+  /**
+   * useForm de react-hook-form:
+   * - resolver: conecta Zod para validar antes de enviar
+   * - defaultValues: mezcla valores vacíos con los precargados (edición)
+   */
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: { ...emptyDefaults, ...defaultValues },
   });
 
+  /** handleSubmit valida con Zod y solo llama onSubmit si pasa la validación */
   const handleSubmit = form.handleSubmit(async (values) => {
     await onSubmit(values);
   });
@@ -63,6 +84,7 @@ export function ProductForm({
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <FieldGroup>
+        {/* --- Campo: Nombre --- */}
         <Field data-invalid={!!form.formState.errors.name}>
           <FieldLabel htmlFor="name">Nombre</FieldLabel>
           <Input
@@ -73,6 +95,7 @@ export function ProductForm({
           <FieldError errors={[form.formState.errors.name]} />
         </Field>
 
+        {/* --- Campo: Descripción --- */}
         <Field data-invalid={!!form.formState.errors.description}>
           <FieldLabel htmlFor="description">Descripción</FieldLabel>
           <Textarea
@@ -83,6 +106,7 @@ export function ProductForm({
           <FieldError errors={[form.formState.errors.description]} />
         </Field>
 
+        {/* --- Campos: Precio y Stock (grid responsive 1 col → 2 cols en md) --- */}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <Field data-invalid={!!form.formState.errors.price}>
             <FieldLabel htmlFor="price">Precio</FieldLabel>
@@ -110,6 +134,7 @@ export function ProductForm({
           </Field>
         </div>
 
+        {/* --- Campo: Activo (Switch requiere Controller, no register) --- */}
         <Field orientation="horizontal">
           <div className="flex flex-col gap-1">
             <FieldLabel htmlFor="is_active">Activo</FieldLabel>
@@ -131,6 +156,7 @@ export function ProductForm({
         </Field>
       </FieldGroup>
 
+      {/* Botón de envío con Spinner mientras isPending=true */}
       <Button type="submit" disabled={isPending} className="w-fit">
         {isPending && <Spinner data-icon="inline-start" />}
         {submitLabel}

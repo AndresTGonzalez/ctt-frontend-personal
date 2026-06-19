@@ -1,15 +1,24 @@
 "use server";
 
 /**
- * Server Actions para el CRUD de productos.
+ * =============================================================================
+ * ARCHIVO: actions/products.ts — Server Actions del CRUD
+ * =============================================================================
  *
- * Las Server Actions son funciones marcadas con 'use server' que se ejecutan
- * exclusivamente en el servidor de Next.js. El navegador nunca ve la URL del API
- * ni necesita configurar CORS.
+ * 'use server' marca este archivo completo como Server Actions.
+ * Estas funciones se ejecutan EXCLUSIVAMENTE en el servidor de Next.js.
  *
- * Tras cada mutación llamamos revalidatePath('/products') para que Next.js
- * regenere la página de listado con datos actualizados.
+ * Ventajas:
+ * - El navegador nunca ve la URL del API (no hay CORS)
+ * - Validación con Zod antes de llamar al backend
+ * - revalidatePath refresca la UI tras mutaciones
+ *
+ * Capa de abstracción:
+ *   Client Component → Server Action (este archivo) → lib/api/products.ts → FastAPI
+ * =============================================================================
  */
+
+/* --- SECCIÓN 1: Importaciones --- */
 import { revalidatePath } from "next/cache";
 
 import {
@@ -21,13 +30,19 @@ import {
 import type { Product, ProductInput } from "@/lib/types/product";
 import { productSchema } from "@/lib/validations/product";
 
+/* --- SECCIÓN 2: Tipo de respuesta unificado --- */
+/**
+ * Todas las acciones devuelven este formato para manejar éxito/error
+ * de forma consistente en los Client Components (toast + lógica condicional).
+ */
 type ActionResult<T> =
   | { success: true; data: T }
   | { success: false; error: string };
 
+/* --- SECCIÓN 3: READ — Obtener un producto por ID --- */
 /**
- * Obtiene un producto por ID (usado al abrir el diálogo de edición).
- * Equivalente a: curl GET http://localhost:8000/products/{id}
+ * Usado al abrir EditProductDialog.
+ * Equivalente cURL: GET http://localhost:8000/products/{id}
  */
 export async function getProductById(
   id: number
@@ -44,13 +59,15 @@ export async function getProductById(
   }
 }
 
+/* --- SECCIÓN 4: CREATE — Crear producto --- */
 /**
- * Crea un producto nuevo.
- * Equivalente a: curl -X POST http://localhost:8000/products/
+ * Equivalente cURL: POST http://localhost:8000/products/
+ * Tras crear, revalidatePath('/products') regenera el listado con el nuevo dato.
  */
 export async function createProduct(
   input: ProductInput
 ): Promise<ActionResult<Product>> {
+  /** Validación en servidor (doble capa: también valida el formulario en cliente) */
   const parsed = productSchema.safeParse(input);
   if (!parsed.success) {
     return {
@@ -72,9 +89,9 @@ export async function createProduct(
   }
 }
 
+/* --- SECCIÓN 5: UPDATE — Actualizar producto --- */
 /**
- * Actualiza un producto existente.
- * Equivalente a: curl -X PUT http://localhost:8000/products/{id}
+ * Equivalente cURL: PUT http://localhost:8000/products/{id}
  */
 export async function updateProduct(
   id: number,
@@ -103,9 +120,9 @@ export async function updateProduct(
   }
 }
 
+/* --- SECCIÓN 6: DELETE — Eliminar producto --- */
 /**
- * Elimina un producto.
- * Equivalente a: curl -X DELETE http://localhost:8000/products/{id}
+ * Equivalente cURL: DELETE http://localhost:8000/products/{id}
  */
 export async function deleteProduct(
   id: number

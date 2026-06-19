@@ -1,14 +1,18 @@
 "use client";
 
 /**
- * Tabla interactiva de productos con paginación y acciones CRUD.
+ * =============================================================================
+ * ARCHIVO: components/products/products-table.tsx — Tabla de productos
+ * =============================================================================
  *
- * Client Component porque maneja:
- * - Estado de diálogos (editar / eliminar)
- * - Navegación de paginación vía router.push()
+ * Tipo: Client Component — maneja clics, diálogos y navegación de paginación
  *
- * Recibe los datos iniciales del Server Component padre (products/page.tsx).
+ * Recibe datos del Server Component padre (products/page.tsx).
+ * No hace fetch directamente: la paginación funciona cambiando la URL.
+ * =============================================================================
  */
+
+/* --- SECCIÓN 1: Importaciones --- */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -33,18 +37,32 @@ import {
 } from "@/components/ui/table";
 import type { PaginatedProducts } from "@/lib/types/product";
 
+/* --- SECCIÓN 2: Tipos de props --- */
 type ProductsTableProps = {
+  /** Objeto completo del API: items + page, page_size, total_pages, total */
   data: PaginatedProducts;
 };
 
+/* --- SECCIÓN 3: Componente tabla --- */
 export function ProductsTable({ data }: ProductsTableProps) {
   const router = useRouter();
+
+  /* --- 3.1: Estado local para controlar diálogos --- */
+  /** ID del producto que se está editando (null = diálogo cerrado) */
   const [editId, setEditId] = useState<number | null>(null);
+
+  /** Producto seleccionado para eliminar (null = diálogo cerrado) */
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
     name: string;
   } | null>(null);
 
+  /* --- 3.2: Navegación de paginación --- */
+  /**
+   * Cambia de página actualizando la URL con query params.
+   * Next.js re-ejecuta products/page.tsx en el servidor con los nuevos params.
+   * Ejemplo: /products?page=2&page_size=10
+   */
   function goToPage(page: number) {
     const params = new URLSearchParams();
     params.set("page", String(page));
@@ -54,11 +72,13 @@ export function ProductsTable({ data }: ProductsTableProps) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* --- SECCIÓN 4: Tabla de datos --- */}
       <div className="rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
+              {/* hidden md:table-cell: oculta descripción en móvil */}
               <TableHead className="hidden md:table-cell">Descripción</TableHead>
               <TableHead>Precio</TableHead>
               <TableHead>Stock</TableHead>
@@ -85,6 +105,7 @@ export function ProductsTable({ data }: ProductsTableProps) {
                   <TableCell>${product.price.toFixed(2)}</TableCell>
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>
+                    {/** Badge success (verde) para activo, secondary (gris) para inactivo */}
                     <Badge variant={product.is_active ? "success" : "secondary"}>
                       {product.is_active ? "Activo" : "Inactivo"}
                     </Badge>
@@ -119,6 +140,7 @@ export function ProductsTable({ data }: ProductsTableProps) {
         </Table>
       </div>
 
+      {/* --- SECCIÓN 5: Paginación (solo si hay más de 1 página) --- */}
       {data.total_pages > 1 && (
         <Pagination>
           <PaginationContent>
@@ -161,6 +183,11 @@ export function ProductsTable({ data }: ProductsTableProps) {
         </Pagination>
       )}
 
+      {/* --- SECCIÓN 6: Diálogos de edición y eliminación --- */}
+      {/**
+       * Los diálogos viven aquí (no en page.tsx) porque dependen del estado
+       * editId/deleteTarget que se actualiza al hacer clic en la tabla.
+       */}
       <EditProductDialog
         productId={editId}
         open={editId !== null}

@@ -1,11 +1,23 @@
 "use client";
 
 /**
- * Diálogo de confirmación para eliminar un producto.
+ * =============================================================================
+ * ARCHIVO: components/products/delete-product-dialog.tsx — Eliminar producto
+ * =============================================================================
  *
- * Usa AlertDialog de shadcn para pedir confirmación explícita
- * antes de ejecutar la Server Action deleteProduct.
+ * Tipo: Client Component — AlertDialog de confirmación
+ *
+ * Flujo:
+ * 1. Usuario clic "Eliminar" → ProductsTable setea deleteTarget
+ * 2. AlertDialog pide confirmación explícita (acción destructiva)
+ * 3. Usuario confirma → deleteProduct (DELETE) → toast + cierra diálogo
+ *
+ * AlertDialog vs Dialog: AlertDialog bloquea la interacción hasta que
+ * el usuario elija Cancelar o Confirmar (ideal para acciones irreversibles).
+ * =============================================================================
  */
+
+/* --- SECCIÓN 1: Importaciones --- */
 import { useTransition } from "react";
 import { toast } from "sonner";
 
@@ -22,6 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 
+/* --- SECCIÓN 2: Tipos de props --- */
 type DeleteProductDialogProps = {
   productId: number | null;
   productName: string;
@@ -29,14 +42,17 @@ type DeleteProductDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+/* --- SECCIÓN 3: Componente diálogo --- */
 export function DeleteProductDialog({
   productId,
   productName,
   open,
   onOpenChange,
 }: DeleteProductDialogProps) {
+  /** isPending=true mientras se ejecuta el DELETE */
   const [isPending, startTransition] = useTransition();
 
+  /* --- Handler de eliminación --- */
   function handleDelete() {
     if (productId === null) return;
 
@@ -64,6 +80,10 @@ export function DeleteProductDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          {/**
+           * preventDefault en onClick evita que AlertDialogAction cierre
+           * el diálogo antes de que termine la Server Action.
+           */}
           <AlertDialogAction
             variant="destructive"
             disabled={isPending}

@@ -1,16 +1,24 @@
 "use client";
 
 /**
- * Diálogo de edición de producto con precarga GET.
+ * =============================================================================
+ * ARCHIVO: components/products/edit-product-dialog.tsx — Editar producto
+ * =============================================================================
  *
- * Flujo educativo clave:
- * 1. El usuario hace clic en "Editar" → se abre el diálogo
- * 2. Se muestra un Skeleton mientras se llama getProductById (Server Action)
- * 3. Al recibir los datos, se precarga el formulario con reset()
- * 4. Al guardar, se llama updateProduct y se cierra el diálogo
+ * Tipo: Client Component — modal interactivo con carga async de datos
  *
- * El GET ocurre al abrir el diálogo para garantizar datos frescos del servidor.
+ * Flujo educativo:
+ * 1. Usuario clic "Editar" → ProductsTable setea editId → open=true
+ * 2. useEffect dispara GET getProductById(id) → muestra Skeleton
+ * 3. Datos llegan → ProductForm se renderiza precargado
+ * 4. Usuario guarda → updateProduct (PUT) → toast + cierra diálogo
+ *
+ * ¿Por qué GET al abrir y no usar datos de la tabla?
+ * Para obtener datos FRESCOS del servidor (otro usuario pudo haber editado).
+ * =============================================================================
  */
+
+/* --- SECCIÓN 1: Importaciones --- */
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -26,27 +34,41 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ProductInput } from "@/lib/types/product";
 
+/* --- SECCIÓN 2: Tipos de props --- */
 type EditProductDialogProps = {
   productId: number | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
+/* --- SECCIÓN 3: Componente diálogo --- */
 export function EditProductDialog({
   productId,
   open,
   onOpenChange,
 }: EditProductDialogProps) {
+  /* --- 3.1: Estado interno --- */
+  /** true mientras se ejecuta el GET del producto */
   const [isLoading, setIsLoading] = useState(false);
+
+  /** Datos del producto sin id, listos para precargar el formulario */
   const [defaultValues, setDefaultValues] = useState<ProductInput | null>(null);
+
+  /** isPending=true mientras se ejecuta el PUT (updateProduct) */
   const [isPending, startTransition] = useTransition();
 
+  /* --- 3.2: Efecto — cargar producto al abrir el diálogo --- */
   useEffect(() => {
+    /** Si el diálogo está cerrado, limpiamos y no hacemos fetch */
     if (!open || productId === null) {
       setDefaultValues(null);
       return;
     }
 
+    /**
+     * Bandera cancelled evita actualizar estado si el usuario cierra
+     * el diálogo antes de que termine el GET (race condition).
+     */
     let cancelled = false;
 
     async function loadProduct() {
@@ -56,6 +78,7 @@ export function EditProductDialog({
       if (cancelled) return;
 
       if (result.success) {
+        /** Separamos id del resto: el formulario solo necesita ProductInput (sin id) */
         const { id: _, ...input } = result.data;
         setDefaultValues(input);
       } else {
@@ -68,11 +91,13 @@ export function EditProductDialog({
 
     loadProduct();
 
+    /** Cleanup: marca cancelled=true si el efecto se re-ejecuta o desmonta */
     return () => {
       cancelled = true;
     };
   }, [open, productId, onOpenChange]);
 
+  /* --- 3.3: Handler — guardar cambios (PUT) --- */
   async function handleSubmit(data: ProductInput) {
     if (productId === null) return;
 
@@ -91,9 +116,11 @@ export function EditProductDialog({
     });
   }
 
+  /* --- 3.4: Renderizado --- */
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
+        {/** DialogTitle es OBLIGATORIO para accesibilidad (lectores de pantalla) */}
         <DialogHeader>
           <DialogTitle>Editar producto</DialogTitle>
           <DialogDescription>
@@ -102,6 +129,7 @@ export function EditProductDialog({
         </DialogHeader>
 
         {isLoading || !defaultValues ? (
+          /** Estado de carga: Skeletons mientras llega el GET */
           <div className="flex flex-col gap-4">
             <Skeleton className="h-8 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -112,6 +140,10 @@ export function EditProductDialog({
             <Skeleton className="h-8 w-24" />
           </div>
         ) : (
+          /**
+           * key={productId} fuerza remontar el formulario si se edita
+           * otro producto, evitando que queden valores del producto anterior.
+           */
           <ProductForm
             key={productId}
             defaultValues={defaultValues}

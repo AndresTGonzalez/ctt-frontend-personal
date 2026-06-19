@@ -1,17 +1,30 @@
 /*
- * globals.css — Punto de entrada de estilos (Tailwind CSS v4 + shadcn/ui)
+ * =============================================================================
+ * ARCHIVO: app/globals.css — Estilos globales (Tailwind v4 + shadcn/ui)
+ * =============================================================================
  *
- * @import "tailwindcss" activa el motor de utilidades de Tailwind.
- * En v4 NO usamos tailwind.config.js: el tema se define aquí con @theme inline.
- * Las variables CSS (--background, --primary, etc.) se mapean a clases como
- * bg-background, text-primary y border-border mediante @theme inline.
+ * SECCIÓN 1: Imports — activan Tailwind, animaciones y tokens de shadcn
+ * SECCIÓN 2: @theme inline — mapea variables CSS → clases Tailwind
+ * SECCIÓN 3: :root — tokens del tema claro
+ * SECCIÓN 4: .dark — tokens del tema oscuro
+ * SECCIÓN 5: @layer base — estilos base de html/body
+ *
+ * En Tailwind v4 NO existe tailwind.config.js: todo el tema se define aquí.
+ * =============================================================================
  */
+
+/* --- SECCIÓN 1: Imports --- */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
+/* --- SECCIÓN 2: @theme inline — expone variables como utilidades Tailwind --- */
+/**
+ * Ejemplo: --color-primary: var(--primary) habilita la clase bg-primary, text-primary, etc.
+ * --color-success: token verde para el Badge "Activo"
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -57,6 +70,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* --- SECCIÓN 3: Tema claro (:root) --- */
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -94,6 +108,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* --- SECCIÓN 4: Tema oscuro (.dark) --- */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -130,6 +145,7 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* --- SECCIÓN 5: Estilos base globales --- */
 @layer base {
   * {
     @apply border-border outline-ring/50;

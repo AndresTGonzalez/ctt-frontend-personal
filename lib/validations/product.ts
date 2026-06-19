@@ -1,11 +1,21 @@
 /**
- * Esquema de validación Zod para formularios de producto.
+ * =============================================================================
+ * ARCHIVO: lib/validations/product.ts — Validación con Zod
+ * =============================================================================
  *
- * Zod valida los datos ANTES de enviarlos al API, mostrando errores
- * amigables en el formulario sin hacer una petición HTTP innecesaria.
+ * Zod define reglas de validación que se usan en DOS lugares:
+ * 1. Cliente: product-form.tsx (via zodResolver de react-hook-form)
+ * 2. Servidor: actions/products.ts (via productSchema.safeParse)
+ *
+ * Validar en ambos lados es defensa en profundidad:
+ * - Cliente: feedback instantáneo al usuario
+ * - Servidor: seguridad (el cliente puede ser manipulado)
+ * =============================================================================
  */
+
 import { z } from "zod";
 
+/* --- SECCIÓN 1: Esquema de validación --- */
 export const productSchema = z.object({
   name: z
     .string()
@@ -17,4 +27,9 @@ export const productSchema = z.object({
   is_active: z.boolean(),
 });
 
+/* --- SECCIÓN 2: Tipo inferido del esquema --- */
+/**
+ * z.infer extrae el tipo TypeScript automáticamente del esquema Zod.
+ * Evita duplicar definiciones: el esquema ES la fuente de verdad.
+ */
 export type ProductFormValues = z.infer<typeof productSchema>;
