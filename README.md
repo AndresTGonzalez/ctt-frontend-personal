@@ -2,6 +2,10 @@
 
 Aplicación educativa de gestión de productos construida con **Next.js 16**, **Tailwind CSS v4**, **shadcn/ui** y **Server Actions**, conectada a un API FastAPI.
 
+## Documentación de clase
+
+Material para profesores y estudiantes (guion de clase, code-along, ejercicios y conceptos): **[docs/README.md](docs/README.md)**
+
 ## Objetivo del proyecto
 
 Demostrar un CRUD completo (crear, leer, actualizar, eliminar) con:
